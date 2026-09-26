@@ -197,6 +197,22 @@ export class InventoryHoldRepository {
   }
 
   /**
+   * Acquire exclusive row-level lock on an inventory hold within a transaction.
+   */
+  async findByIdForUpdate(id: string, client: pg.PoolClient): Promise<InventoryHoldEntity | null> {
+    const sql = `
+      SELECT ${HOLD_PROJECTION}
+      FROM inventory_holds
+      WHERE id = $1
+      FOR UPDATE;
+    `;
+
+    const result = await client.query<InventoryHoldRow>(sql, [id]);
+    const row = result.rows[0];
+    return row ? mapRowToHoldEntity(row) : null;
+  }
+
+  /**
    * Update the status of a hold (e.g. to COMMITTED, EXPIRED, or RELEASED).
    */
   async updateStatus(
@@ -213,6 +229,34 @@ export class InventoryHoldRepository {
     `;
 
     const result = await executor.query<InventoryHoldRow>(sql, [id, status]);
+    const row = result.rows[0];
+    return row ? mapRowToHoldEntity(row) : null;
+  }
+
+  /**
+   * Atomic state transition primitive guarded by expected current status.
+   * Prevents concurrency races between confirmation, expiration, and release.
+   */
+  async updateStatusGuarded(
+    id: string,
+    expectedCurrentStatus: InventoryHoldStatus,
+    nextStatus: InventoryHoldStatus,
+    client?: pg.PoolClient,
+  ): Promise<InventoryHoldEntity | null> {
+    const executor = this.getExecutor(client);
+    const sql = `
+      UPDATE inventory_holds
+      SET status = $3
+      WHERE id = $1
+        AND status = $2
+      RETURNING ${HOLD_PROJECTION};
+    `;
+
+    const result = await executor.query<InventoryHoldRow>(sql, [
+      id,
+      expectedCurrentStatus,
+      nextStatus,
+    ]);
     const row = result.rows[0];
     return row ? mapRowToHoldEntity(row) : null;
   }

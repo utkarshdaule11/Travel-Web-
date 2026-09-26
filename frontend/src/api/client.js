@@ -292,6 +292,53 @@ export class ApiClient {
       },
     );
   }
+
+  // --- Phase 5 Customer Booking APIs ---
+
+  async createBooking(data, idempotencyKey = null, options = {}) {
+    const key =
+      idempotencyKey ||
+      (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+            const r = (Math.random() * 16) | 0;
+            const v = c === 'x' ? r : (r & 0x3) | 0x8;
+            return v.toString(16);
+          }));
+
+    const headers = {
+      'idempotency-key': key,
+      ...(options.headers || {}),
+    };
+
+    return this.post('/bookings', data, {
+      ...options,
+      headers,
+      includeMeta: true,
+    });
+  }
+
+  async getMyBookings(params = {}, options = {}) {
+    const query = new URLSearchParams();
+    if (params.page) query.set('page', String(params.page));
+    if (params.limit) query.set('limit', String(params.limit));
+    if (params.status) query.set('status', String(params.status));
+    const qs = query.toString();
+    return this.get(`/bookings${qs ? `?${qs}` : ''}`, {
+      includeMeta: true,
+      ...options,
+    });
+  }
+
+  async getBookingByReference(reference, options = {}) {
+    if (!reference) throw new Error('Booking reference is required');
+    return this.get(`/bookings/${encodeURIComponent(reference)}`, options);
+  }
+
+  async cancelBooking(reference, reason = 'Customer requested cancellation', options = {}) {
+    if (!reference) throw new Error('Booking reference is required');
+    return this.post(`/bookings/${encodeURIComponent(reference)}/cancel`, { reason }, options);
+  }
 }
 
 export const api = new ApiClient();

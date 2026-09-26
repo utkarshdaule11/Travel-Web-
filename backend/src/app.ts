@@ -24,6 +24,12 @@ import {
   DepartureService,
   AvailabilityService,
 } from './modules/inventory/index.js';
+import {
+  BookingRepository,
+  PassengerRepository,
+  IdempotencyRepository,
+  BookingService,
+} from './modules/booking/index.js';
 import { loggingPlugin } from './plugins/logging.js';
 import { securityPlugin } from './plugins/security.js';
 import { authPlugin } from './plugins/auth.js';
@@ -52,6 +58,10 @@ export interface AppDependencies {
   packageSearchService?: PackageSearchService;
   departureService?: DepartureService;
   availabilityService?: AvailabilityService;
+  bookingRepo?: BookingRepository;
+  passengerRepo?: PassengerRepository;
+  idempotencyRepo?: IdempotencyRepository;
+  bookingService?: BookingService;
 }
 
 export async function createApp(dependencies: AppDependencies = {}): Promise<{
@@ -66,6 +76,7 @@ export async function createApp(dependencies: AppDependencies = {}): Promise<{
   packageSearchService: PackageSearchService;
   departureService: DepartureService;
   availabilityService: AvailabilityService;
+  bookingService: BookingService;
   config: EnvConfig;
 }> {
   const config = dependencies.config ?? loadEnv();
@@ -125,6 +136,25 @@ export async function createApp(dependencies: AppDependencies = {}): Promise<{
   const availabilityService =
     dependencies.availabilityService ?? new AvailabilityService(departureRepo);
 
+  // Instantiate Booking Layer (Phase 5)
+  const bookingRepo = dependencies.bookingRepo ?? new BookingRepository(db);
+  const passengerRepo = dependencies.passengerRepo ?? new PassengerRepository(db);
+  const idempotencyRepo = dependencies.idempotencyRepo ?? new IdempotencyRepository(db);
+
+  const bookingService =
+    dependencies.bookingService ??
+    new BookingService(
+      db,
+      bookingRepo,
+      passengerRepo,
+      idempotencyRepo,
+      departureRepo,
+      holdRepo,
+      tourPackageRepo,
+      itineraryRepo,
+      destinationRepo,
+    );
+
   // Register Core Middleware Plugins
   await app.register(loggingPlugin, { config });
   await app.register(securityPlugin, { config });
@@ -152,6 +182,7 @@ export async function createApp(dependencies: AppDependencies = {}): Promise<{
     packageSearchService,
     departureService,
     availabilityService,
+    bookingService,
     config,
   });
 
@@ -167,6 +198,7 @@ export async function createApp(dependencies: AppDependencies = {}): Promise<{
     packageSearchService,
     departureService,
     availabilityService,
+    bookingService,
     config,
   };
 }

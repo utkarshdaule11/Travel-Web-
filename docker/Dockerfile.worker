@@ -10,6 +10,7 @@ RUN npm ci
 
 COPY worker/ ./worker/
 COPY shared/ ./shared/
+COPY backend/ ./backend/
 
 RUN npm run build
 

@@ -10,6 +10,7 @@ describe('Worker Foundation — BullMQ Smoke Queue Definition', () => {
     const queue = createSmokeQueue({
       NODE_ENV: 'test',
       LOG_LEVEL: 'fatal',
+      DATABASE_URL: 'postgresql://travel_user:travel_password@localhost:5432/travel_db',
       REDIS_HOST: 'localhost',
       REDIS_PORT: 6379,
       REDIS_PASSWORD: '',
@@ -24,6 +25,7 @@ describe('Worker Foundation — BullMQ Smoke Queue Definition', () => {
     const worker = createSmokeWorker({
       NODE_ENV: 'test',
       LOG_LEVEL: 'fatal',
+      DATABASE_URL: 'postgresql://travel_user:travel_password@localhost:5432/travel_db',
       REDIS_HOST: 'localhost',
       REDIS_PORT: 6379,
       REDIS_PASSWORD: '',

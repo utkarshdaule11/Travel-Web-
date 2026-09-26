@@ -1,6 +1,7 @@
 import { NavbarComponent } from './components/navbar.js';
 import { AuthModal } from './components/authModal.js';
 import { CatalogueSection } from './components/catalogueSection.js';
+import { BookingModal } from './components/bookingModal.js';
 import { api } from './api/client.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -8,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   AuthModal.init();
   NavbarComponent.init();
   CatalogueSection.init();
+  BookingModal.init();
 
   // Non-blocking background session restoration via HttpOnly cookie
   try {

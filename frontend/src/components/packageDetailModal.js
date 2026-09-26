@@ -1,5 +1,6 @@
 import { escapeHtml, formatPrice, formatDuration, FALLBACK_IMAGE } from '../utils/formatters.js';
 import { api } from '../api/client.js';
+import { BookingModal } from './bookingModal.js';
 
 /**
  * Controller for rendering and handling the Package Detail Modal with Phase 4 Live Departures & Availability
@@ -555,11 +556,54 @@ export class PackageDetailModal {
           .join('')}
       </div>
       <div class="departures-booking-footer">
-        <p class="phase5-booking-note">
-          ℹ️ Instant reservations and online checkout will be available in Phase 5.
-        </p>
+        ${(() => {
+          const selectedDep = this.departures.find(
+            (d) => d.departureId === this.selectedDepartureId,
+          );
+          const isSelectable =
+            selectedDep &&
+            (selectedDep.availabilityStatus === 'AVAILABLE' ||
+              selectedDep.availabilityStatus === 'FEW_SEATS_LEFT');
+
+          if (isSelectable) {
+            const price = formatPrice(selectedDep.effectiveAdultPrice, selectedDep.currency);
+            return `
+                <div class="booking-cta-bar">
+                  <div class="booking-cta-info">
+                    <span class="cta-label">Selected Date: <strong>${escapeHtml(selectedDep.departureDate)}</strong></span>
+                    <span class="cta-price">${price} / adult &bull; Party of ${this.partySize}</span>
+                  </div>
+                  <button type="button" class="btn-primary btn-book-departure" id="btn-book-selected-departure">
+                    Book Now &rarr;
+                  </button>
+                </div>
+              `;
+          } else {
+            return `
+                <div class="booking-cta-bar disabled">
+                  <p class="phase5-booking-note">
+                    Please select an open departure date above to start your reservation.
+                  </p>
+                </div>
+              `;
+          }
+        })()}
       </div>
     `;
+
+    // Attach listener to Book Departure CTA
+    const bookBtn = listContainer.querySelector('#btn-book-selected-departure');
+    if (bookBtn) {
+      bookBtn.addEventListener('click', () => {
+        const selectedDep = this.departures.find((d) => d.departureId === this.selectedDepartureId);
+        if (selectedDep) {
+          const pkg = this.currentPackage;
+          const partySize = this.partySize;
+          this.close();
+          BookingModal.open({ pkg, departure: selectedDep, initialPartySize: partySize });
+        }
+      });
+    }
 
     // Attach click and keyboard listeners to selectable departure cards
     listContainer.querySelectorAll('.departure-card:not(.disabled)').forEach((card) => {

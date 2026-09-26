@@ -1,5 +1,6 @@
 import { authStore, AuthStatus } from '../state/auth.js';
 import { AuthModal } from './authModal.js';
+import { MyBookingsModal } from './myBookingsModal.js';
 import { api } from '../api/client.js';
 
 /**
@@ -59,9 +60,15 @@ export class NavbarComponent {
       container.innerHTML = `
         <div class="nav-user-greeting">
           <span class="user-greeting-text" id="user-greeting-text">Hi, ${safeName}</span>
+          <button type="button" class="btn-secondary btn-sm btn-nav-bookings" id="nav-my-bookings-btn" aria-label="View your bookings">My Bookings</button>
           <button type="button" class="btn-logout" id="nav-logout-btn" aria-label="Sign out of your account">Logout</button>
         </div>
       `;
+
+      const bookingsBtn = container.querySelector('#nav-my-bookings-btn');
+      if (bookingsBtn) {
+        bookingsBtn.addEventListener('click', () => MyBookingsModal.open());
+      }
 
       const logoutBtn = container.querySelector('#nav-logout-btn');
       if (logoutBtn) {

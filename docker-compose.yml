@@ -89,9 +89,12 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: development
+      DATABASE_URL: postgresql://travel_user:travel_password@postgres:5432/travel_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
+      postgres:
+        condition: service_healthy
       redis:
         condition: service_healthy
 
